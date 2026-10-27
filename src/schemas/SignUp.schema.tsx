@@ -2,7 +2,7 @@ import * as zod from "zod"
 
 
 
-export  let schema = zod
+export  let signupSchema = zod
   .object({
     name: zod
       .string()
@@ -13,11 +13,10 @@ export  let schema = zod
       .string()
       .regex(/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/),
     dateOfBirth: zod.coerce.date(),
-    gender: zod.enum(["male", "femail"]),
+    gender: zod.enum(["male", "female"]),
     password: zod.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/),
     rePassword: zod.string().regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*]).{8,}$/),
-  })
-  .refine(
+  }).refine(
     function (values) {
       return values.password == values.rePassword;
     },
@@ -27,4 +26,4 @@ export  let schema = zod
     },
   );
 
-export type signupType = zod.infer<typeof schema>
+export type signupType = zod.infer<typeof signupSchema>;
