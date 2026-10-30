@@ -16,7 +16,13 @@ import AddPostComponent from '../../components/AddPostComponent';
 export default function Home() {
   const { token } = useContext(createdContext)
   //  const [posts, setposts] = useState(null)
-// const [Loding, setLoding] = useState(true)
+  // const [Loding, setLoding] = useState(true)
+   
+     
+
+
+
+
    function getPosts() {
    
     return axios.get("https://route-posts.routemisr.com/posts", {
@@ -33,7 +39,7 @@ export default function Home() {
 
     const {data , isFetching , isLoading , isError} =  useQuery({queryFn: getPosts, queryKey : ["allPosts"] });
     
-    console.log(data)
+    
   
   if (isLoading) {
       return <PostSkeleton />;

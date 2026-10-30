@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react'
 
 import { FiHeart, FiMessageCircle, FiShare2, FiUser } from "react-icons/fi";
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { date } from "zod/v4";
 import type { PostType } from '../../types/PostType';
 import Comment from "../Comment"
@@ -9,7 +9,7 @@ import { IoIosSend } from "react-icons/io";
 import axios from 'axios';
 import { createdContext } from '../../context/AuthContext';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Spinner } from "@heroui/react";
+import { Spinner, toast } from "@heroui/react";
 import { Button, Dropdown, Label } from "@heroui/react";
 import { BsThreeDots } from "react-icons/bs";
 
@@ -22,6 +22,19 @@ export default function PostCard({ post, comments }: postCardProps) {
   const { token, userId } = useContext(createdContext);
   const [commentInput, setcommentInput] = useState("");
   const queryClient = useQueryClient();
+  const nav = useNavigate()
+  
+
+  
+  
+  //   const {mutate : mutateUpdate}= useMutation({
+  //     mutationFn: updatePost, 
+  //     onSuccess: function () {
+  //       toast.success("post updated sucessfully")
+  //     }
+     
+  //  })
+
   function sendComment() {
     let commentData = {
       content: commentInput,
@@ -33,7 +46,7 @@ export default function PostCard({ post, comments }: postCardProps) {
       { headers: { token: token } },
     );
   }
-  
+  const [isLiked, setisLiked] = useState(false)
 
   console.log(post)
   function likePost() {
@@ -47,8 +60,8 @@ export default function PostCard({ post, comments }: postCardProps) {
     
     onSuccess: function () {
           
-      queryClient.invalidateQueries({ queryKey: ["post", post.id] });
-      
+      queryClient.invalidateQueries({ queryKey: ["allPosts"] });
+      setisLiked(true)
     }
 
     })
@@ -61,6 +74,30 @@ export default function PostCard({ post, comments }: postCardProps) {
       queryClient.invalidateQueries({ queryKey: ["comment", post.id] });
     },
   });
+  
+  function updatePostAcrion() {
+   const postId = post._id
+ }
+
+
+  function deletePost() {
+    return axios.delete(`https://route-posts.routemisr.com/posts/${post._id}`, {
+      headers: { token :token}
+    });  
+
+    }
+     
+  
+  const { mutate: deleteMutate } = useMutation({
+    mutationFn: deletePost, 
+    onSuccess: function () {
+      toast("post deleted")
+       queryClient.invalidateQueries({ queryKey: ["allPosts"] });
+     }
+   });
+  
+
+
 
   return (
     <>
@@ -107,22 +144,24 @@ export default function PostCard({ post, comments }: postCardProps) {
               <BsThreeDots />
             </Button>
             <Dropdown.Popover>
-              <Dropdown.Menu
-                onAction={(key) => console.log(`Selected: ${key}`)}
-              >
+              <Dropdown.Menu>
                 {userId === post.user._id ? (
                   <>
-                    {" "}
                     <Dropdown.Item id="edit-file" textValue="Edit file">
-                      <Label>Edit post</Label>
+                      <button
+                        onClick={() => nav("/addPost", { state: { action: updatePostAcrion } })
+                        }
+                      >
+                        Edit post
+                      </button>
                     </Dropdown.Item>
                     <Dropdown.Item
                       id="delete-file"
                       textValue="Delete file"
                       variant="danger"
                     >
-                      <Label>Delete post</Label>
-                    </Dropdown.Item>{" "}
+                      <button onClick={deleteMutate}>Delete post</button>
+                    </Dropdown.Item>
                   </>
                 ) : (
                   <Dropdown.Item id="copy-link" textValue="Copy link">

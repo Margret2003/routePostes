@@ -33,8 +33,7 @@ let x = createBrowserRouter([
         path: "/addPost",
         element: (
           <ProtectedRoute>
-            {" "}
-            <AddPostComponent/>{" "}
+            <AddPostComponent/>
           </ProtectedRoute>
         ),
       },
