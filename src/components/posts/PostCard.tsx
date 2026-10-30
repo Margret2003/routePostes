@@ -147,9 +147,19 @@ export default function PostCard({ post, comments }: postCardProps) {
               <Dropdown.Menu>
                 {userId === post.user._id ? (
                   <>
+                  
                     <Dropdown.Item id="edit-file" textValue="Edit file">
                       <button
-                        onClick={() => nav("/addPost", { state: { action: updatePostAcrion } })
+                        onClick={() =>
+                          nav("/addPost", {
+                            state: {
+                              post: {
+                                id: post._id,
+                                body: post.body,
+                                image: post.image,
+                              },
+                            },
+                          })
                         }
                       >
                         Edit post

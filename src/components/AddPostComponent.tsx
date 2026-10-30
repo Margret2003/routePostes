@@ -5,65 +5,76 @@ import React, { useContext, useRef, useState, useEffect } from "react";
 import { FaRegImage } from "react-icons/fa6";
 import { createdContext } from "../context/AuthContext";
 import { ImCancelCircle } from "react-icons/im";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "@heroui/react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function AddPostComponent() {
   let imageFile = useRef<HTMLInputElement>(null);
   let postbody = useRef<HTMLTextAreaElement>(null);
-  const [imgUrl, setImgUrl] = useState("");
   const { token } = useContext(createdContext);
   const nav = useNavigate();
   const location = useLocation();
-
+  const queryClient = useQueryClient()
   // استقبال الأكشن اللي جاي من الـ state (لو وجد يبقى احنا في وضع التعديل)
-  const myActionFn = location.state?.action;
-  const isEditMode = Boolean(myActionFn);
-
+  const postToEdit = location.state?.post;
+  const isEditMode = Boolean(postToEdit);
+  const [imgUrl, setImgUrl] = useState(postToEdit?.image ?? "");
+  
   function previewImage() {
     if (imageFile.current?.files?.[0]) {
       setImgUrl(URL.createObjectURL(imageFile.current.files[0]));
     }
   }
-
-  // دالة الإضافة (Create)
-  function createPost() {
-    const postData = new FormData();
+ 
+  function buildFormData() {
+      const postData = new FormData();
     if (postbody.current?.value) {
       postData.append("body", postbody.current.value);
     }
     if (imageFile.current?.files?.[0]) {
       postData.append("image", imageFile.current.files[0]);
     }
-    return axios.post("https://route-posts.routemisr.com/posts", postData, {
-      headers: { token: token },
-    });
+    return postData
+    }
+
+  // دالة الإضافة (Create)
+  function createPost() {
+    
+    return axios.post(
+      "https://route-posts.routemisr.com/posts",
+      buildFormData(),
+      {
+        headers: { token: token },
+      },
+    );
   }
+ 
+   function updatePost() {
+     return axios.put(
+       `https://route-posts.routemisr.com/posts/${postToEdit.id}`,
+       buildFormData(),
+       { headers: { token: token } },
+     );
+   }
 
   // Mutation خاصة بالإنشاء
-  const { mutate: createMutate } = useMutation({
-    mutationFn: createPost,
+  const { mutate, isPending } = useMutation({
+    mutationFn: isEditMode ? updatePost : createPost,
     onSuccess() {
-      toast.success("Post created successfully");
+      toast.success(
+        isEditMode ? "Post updated successfully" : "Post created successfully",
+      );
+      queryClient.invalidateQueries({ queryKey: ["allPosts"] });
       nav("/home");
     },
     onError() {
-      toast.danger("Error creating post");
+      toast.danger(isEditMode ? "Error updating post" : "Error creating post");
     },
   });
   
   // لو الـ myActionFn هي عبارة عن Mutation جاهزة تم تمريرها من صفحة البوستات
-  const { mutate: updateMutate, isPending: isUpdating } = useMutation({
-    mutationFn: myActionFn, // أو ممكن تمرري الدالة هنا مباشرة لو عاملة لها define في مكان تاني
-    onSuccess() {
-      toast.success("Post updated successfully");
-      nav("/home");
-    },
-    onError() {
-      toast.danger("Error updating post");
-    },
-  });
+ 
 
   function deleteImgPrv() {
     setImgUrl("");
@@ -87,6 +98,7 @@ export default function AddPostComponent() {
             </label>
             <textarea
               ref={postbody}
+              defaultValue={postToEdit?.body ?? ""}
               placeholder="Share your thoughts..."
               className="w-full h-40 rounded-2xl p-4 border-2 border-cyan-500/50 focus:border-cyan-500 focus:outline-none resize-none transition-all shadow-sm text-gray-700"
             />
@@ -132,7 +144,7 @@ export default function AddPostComponent() {
 
           {/* Submit Button */}
           <button
-            onClick={isEditMode ? updateMutate : createMutate}
+            onClick={() => mutate()}
             className="rounded-full bg-sky-500 hover:bg-sky-600 text-white font-medium w-full py-3.5 mt-4 transition-all shadow-md hover:shadow-lg cursor-pointer"
           >
             {isEditMode ? "Update Post" : "Post"}
